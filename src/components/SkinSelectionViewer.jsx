@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { SkinSelectionEngine } from "../three/SkinSelectionEngine";
-import "../three/threeLabels.css";
+import "../three/ThreeLabels.css";
 
 export default function SkinSelectionViewer({
   onRowsChange,

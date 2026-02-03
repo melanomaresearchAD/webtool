@@ -214,9 +214,9 @@ export class SkinSelectionEngine {
   // Private methods
   async _loadData() {
     const [lymphs, dataElements, patientCounts] = await Promise.all([
-      fetch("/tool1/lymphs_positions.json").then((r) => r.json()),
-      fetch("/tool1/data_elements.json").then((r) => r.json()),
-      fetch("/tool1/element_patient_counts.json").then((r) => r.json()),
+      fetch("./src/data/lymphs_positions.json").then((r) => r.json()),
+      fetch("./src/data/data_elements.json").then((r) => r.json()),
+      fetch("./src/data/element_patient_counts.json").then((r) => r.json()),
     ]);
     this.data_elements = dataElements;
     this.patient_counts = patientCounts;
@@ -288,7 +288,7 @@ export class SkinSelectionEngine {
 
     await new Promise((resolve, reject) => {
       loader.load(
-        "/tool1/scene.glb",
+        "./src/data/scene.glb",
         (gltf) => {
           let root = gltf.scene.children[0];
 

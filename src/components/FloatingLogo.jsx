@@ -5,8 +5,8 @@ export default function FloatingLogo({
   alt = "Logo",
   width = 300,
   height = 70,
-  bottom = 5,
-  right = 24,
+  bottom = {xs:8, sm:10, md:12},
+  right = {xs:12, sm:16, md:24},
   zIndex = 1300,
 }) {
   if (!src) return null;
@@ -27,7 +27,7 @@ export default function FloatingLogo({
         src={src}
         alt={alt}
         sx={{
-          width,
+          width : {xs:160, sm:200, md:240, lg:300},
           height,
           display: "block",
           objectFit: "contain",

@@ -45,7 +45,7 @@ export default function App() {
           <Route path="/team"  element={ <CenteredPage> <Team /> </CenteredPage> } />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-        <FloatingLogo src={"src/assets/logo.png"}/>
+        <FloatingLogo src={"src/assets/images/abilogo.png"}/>
            
       </Box>
     </Box>

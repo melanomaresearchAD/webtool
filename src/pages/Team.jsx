@@ -6,14 +6,14 @@ const teamMembers = [
     title: "Senior Research Fellow",
     organisation: "Auckland Bioengineering Institute",
     profileUrl: "https://profiles.auckland.ac.nz/hayley-reynolds",
-    imageUrl: "'${import.meta.env.BASE_URL}images/hayley.png'",
+    imageUrl: `${import.meta.env.BASE_URL}images/hayley.png`,
   },
   {
     name: "Tharanga Don",
     title: "Research Fellow",
     organisation: "Auckland Bioengineering Institute",
     profileUrl: "https://profiles.auckland.ac.nz/t-jayathungage-don",
-    imageUrl: "'${import.meta.env.BASE_URL}images/tharanga.png'",
+    imageUrl: `${import.meta.env.BASE_URL}images/tharanga.png`,
   },
   {
     name: "Alex Chen",

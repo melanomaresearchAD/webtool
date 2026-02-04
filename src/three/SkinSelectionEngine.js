@@ -256,7 +256,7 @@ export class SkinSelectionEngine {
       const obj = new CSS2DObject(div);
 
       // Lift label above the node
-      obj.position.copy(pos).add(new THREE.Vector3(0, 0, 55));
+      obj.position.copy(pos).add(new THREE.Vector3(0, 0, 25));
 
       obj.visible = false;
       this.scene.add(obj);

@@ -25,7 +25,7 @@ import ViewControls from "../components/ViewControls";
 import CanvasControls from "../components/CanvasControls";
 import SkinSelectionViewer from "../components/SkinSelectionViewer";
 
-const SIDEBAR_W = 520;
+const SIDEBAR_W = "clamp(360px, 28vw, 680px)";
 const safeTop = "calc(env(safe-area-inset-top, 0px) + 12px)";
 
 
@@ -67,7 +67,7 @@ export default function Tool1() {
         height: { xs: "calc(100dvh - 56px)", sm: "calc(100dvh - 64px)" },
         width: "100%",
         display: { xs: "block", md: "grid" },
-        gridTemplateColumns: { md: `${SIDEBAR_W}px 1fr` },
+        gridTemplateColumns: { md: `${SIDEBAR_W} 1fr` },
         overflow: "hidden",
       }}
     >

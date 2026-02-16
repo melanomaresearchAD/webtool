@@ -2,45 +2,38 @@ import { Box, Typography, Grid, Link, Avatar, Stack } from "@mui/material";
 
 const teamMembers = [
   {
-    name: "Hayley Reynolds",
+    name: "Hayley Reynolds PhD.",
     title: "Senior Research Fellow",
     organisation: "Auckland Bioengineering Institute",
     profileUrl: "https://profiles.auckland.ac.nz/hayley-reynolds",
     imageUrl: `${import.meta.env.BASE_URL}images/hayley.png`,
   },
   {
-    name: "Tharanga Don",
+    name: "Tharanga Don PhD.",
     title: "Research Fellow",
     organisation: "Auckland Bioengineering Institute",
     profileUrl: "https://profiles.auckland.ac.nz/t-jayathungage-don",
     imageUrl: `${import.meta.env.BASE_URL}images/tharanga.png`,
   },
   {
-    name: "Alex Chen",
-    title: "example",
-    organisation: "abi",
+    name: "David Chung MD",
+    title: "Nuclear Medicine Physician",
+    organisation: "Alfred Nuclear Medicine and Ultrasound,  Sydney",
     profileUrl: "",
     imageUrl: "",
   },
   {
-    name: "Jhon Doe",
-    title: "example",
-    organisation: "syd institute",
+    name: "Roger Uren MD",
+    title: "complete this",
+    organisation: "Complete this",
     profileUrl: "",
     imageUrl: "",
   },
   {
-    name: "Sam Taylor",
-    title: "example",
-    organisation: "UOA",
-    profileUrl: "",
-    imageUrl: "",
-  },
-  {
-    name: "Mia Park",
-    title: "example",
-    organisation: "example org",
-    profileUrl: "",
+    name: "Arnav Dogra",
+    title: "Research Assistant",
+    organisation: "University of Auckland",
+    profileUrl: "https://nz.linkedin.com/in/arnav-dogra",
     imageUrl: "",
   },
 ];
@@ -64,9 +57,8 @@ export default function Team() {
         </Typography>
 
         <Typography color="text.secondary" sx={{ maxWidth: 760, mx: "auto" }}>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-          incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-          exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+          This melanoma tool has been developed by researchers in the Cancer Imaging Research Group at the Auckland Bioengineering Institute, University of Auckland, New Zealand.
+          The melanoma lymphoscintigraphy data that has been used was collected at the Alfred Nuclear Medicine and Ultrasound in Sydney, Australia, over 30 years, between 1995 and 2025.
         </Typography>
 
         <Grid container spacing={2.5} sx={{ mt: 2 }} justifyContent="center">

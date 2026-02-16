@@ -4,7 +4,6 @@ import {
   Paper,
   Typography,
   Divider,
-  Checkbox,
   Radio,
   SwipeableDrawer,
   useMediaQuery,
@@ -15,8 +14,8 @@ import {
   TableBody,
   TableRow,
   TableCell,
-  Collapse,
-  IconButton
+  IconButton, 
+  Switch,
 } from "@mui/material";
 
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
@@ -254,6 +253,8 @@ function SidebarContent({
     fontWeight: 800,
   };
 
+  const INDENT= "\u2003-\u2003";
+
   // Default options closed
   const [openSections, setOpenSections] = useState({
     "Head and Neck": false,
@@ -269,62 +270,42 @@ function SidebarContent({
       {
         title: "Head and Neck",
         rows: [
-          { type: "lr", label: `Occipital`, left: "Left Occipital", right: "Right Occipital" },
-          { type: "lr", label: `Preauricular`, left: "Left Preauricular", right: "Right Preauricular" },
-          { type: "lr", label: `Postauricular`, left: "Left Postauricular", right: "Right Postauricular" },
-          { type: "lr", label: `Cervical Level I`, left: "Left Cervical Level I", right: "Right Cervical Level I" },
-          { type: "lr", label: `Cervical Level II`, left: "Left Cervical Level II", right: "Right Cervical Level II" },
-          { type: "lr", label: `Cervical Level III`, left: "Left Cervical Level III", right: "Right Cervical Level III" },
-          { type: "lr", label: `Cervical Level IV`, left: "Left Cervical Level IV", right: "Right Cervical Level IV" },
-          { type: "lr", label: `Cervical Level V`, left: "Left Cervical Level V", right: "Right Cervical Level V" },
-          { type: "lr", label: `Submental`, left: "Left Submental", right: "Right Submental" },
-          { type: "single", label: `Anterior Node Fields`, valueKey: "Anterior Head" },
-          { type: "single", label: `Posterior Node Fields`, valueKey: "Posterior Head" },
+          { type: "lr", label: `${INDENT}Occipital`, left: "Left Occipital", right: "Right Occipital" },
+          { type: "lr", label: `${INDENT}Preauricular`, left: "Left Preauricular", right: "Right Preauricular" },
+          { type: "lr", label: `${INDENT}Postauricular`, left: "Left Postauricular", right: "Right Postauricular" },
+          { type: "lr", label: `${INDENT}Cervical Level I`, left: "Left Cervical Level I", right: "Right Cervical Level I" },
+          { type: "lr", label: `${INDENT}Cervical Level II`, left: "Left Cervical Level II", right: "Right Cervical Level II" },
+          { type: "lr", label: `${INDENT}Cervical Level III`, left: "Left Cervical Level III", right: "Right Cervical Level III" },
+          { type: "lr", label: `${INDENT}Cervical Level IV`, left: "Left Cervical Level IV", right: "Right Cervical Level IV" },
+          { type: "lr", label: `${INDENT}Cervical Level V`, left: "Left Cervical Level V", right: "Right Cervical Level V" },
+          { type: "lr", label: `${INDENT}Submental`, left: "Left Submental", right: "Right Submental" },
+          { type: "single", label: `${INDENT}Anterior Node Fields`, valueKey: "Anterior Head" },
+          { type: "single", label: `${INDENT}Posterior Node Fields`, valueKey: "Posterior Head" },
         ],
       },
 
       {
-        title: "Axilla",
+        title: "Torso and Upper Limb",
         rows: [
-          { type: "lr", label: `Combined Levels I, II, III`, left: "Left Axilla", right: "Right Axilla" },
-          { type: "lr", label: `Level I Anterior`, left: "Left Axilla/Sub-Node Fields Laa", right: "Right Axilla/Sub-Node Fields Raa" },
-          { type: "lr", label: `Level I Mid`, left: "Left Axilla/Sub-Node Fields Lam", right: "Right Axilla/Sub-Node Fields Ram" },
-          { type: "lr", label: `Level I Posterior`, left: "Left Axilla/Sub-Node Fields Lap", right: "Right Axilla/Sub-Node Fields Rap" },
-          { type: "lr", label: `Level I Lateral`, left: "Left Axilla/Sub-Node Fields Lal", right: "Right Axilla/Sub-Node Fields Ral" },
-        ],
-      },
-      {
-        title: "Triangular Intermuscular Space",
-        rows: [
-          { type: "lr", label: "Triangular Intermuscular Space", left: "Left Triangular Intermuscular Space", right: "Right Triangular Intermuscular Space" },
-        ],
-      },
-      {
-        title: "Supraclavicular Fossa",
-        rows: [
-          { type: "lr", label: "Supraclavicular Fossa", left: "Left Supraclavicular Fossa", right: "Right Supraclavicular Fossa" },
-        ],
-      },
-      {
-        title: "Epitrochlear",
-        rows: [
-          { type: "lr", label: "Epitrochlear", left: "Left Epitrochlear", right: "Right Epitrochlear" },
+          { type: "lr", label: `${INDENT}Axilla Combined Levels I, II, III`, left: "Left Axilla", right: "Right Axilla" },
+          { type: "lr", label: `${INDENT}Axilla Level I Anterior`, left: "Left Axilla/Sub-Node Fields Laa", right: "Right Axilla/Sub-Node Fields Raa" },
+          { type: "lr", label: `${INDENT}Axilla Level I Mid`, left: "Left Axilla/Sub-Node Fields Lam", right: "Right Axilla/Sub-Node Fields Ram" },
+          { type: "lr", label: `${INDENT}Axilla Level I Posterior`, left: "Left Axilla/Sub-Node Fields Lap", right: "Right Axilla/Sub-Node Fields Rap" },
+          { type: "lr", label: `${INDENT}Axilla Level I Lateral`, left: "Left Axilla/Sub-Node Fields Lal", right: "Right Axilla/Sub-Node Fields Ral" },
+          { type: "lr", label: `${INDENT}Triangular Intermuscular Space`, left: "Left Triangular Intermuscular Space", right: "Right Triangular Intermuscular Space" },
+          { type: "lr", label: `${INDENT}Supraclavicular Fossa`, left: "Left Supraclavicular Fossa", right: "Right Supraclavicular Fossa" },
+          { type: "lr", label: `${INDENT}Epitrochlear`, left: "Left Epitrochlear", right: "Right Epitrochlear" },
         ],
       },
 
       {
-        title: "Groin",
+        title: "Lower Limb",
         rows: [
-          { type: "lr", label: `Combined`, left: "Left Groin", right: "Right Groin" },
-          { type: "lr", label: `External Iliac`, left: "Left Groin/Sub-Node Fields Liei", right: "Right Groin/Sub-Node Fields Riei" },
-          { type: "lr", label: `Femoral`, left: "Left Groin/Sub-Node Fields Lif", right: "Right Groin/Sub-Node Fields Rif" },
-          { type: "lr", label: `Inguinal`, left: "Left Groin/Sub-Node Fields Lii", right: "Right Groin/Sub-Node Fields Rii" },
-        ],
-      },
-      {
-        title: "Popliteal",
-        rows: [
-          { type: "lr", label: "Popliteal", left: "Left Popliteal", right: "Right Popliteal" },
+          { type: "lr", label: `${INDENT}Combined`, left: "Left Groin", right: "Right Groin" },
+          { type: "lr", label: `${INDENT}External Iliac`, left: "Left Groin/Sub-Node Fields Liei", right: "Right Groin/Sub-Node Fields Riei" },
+          { type: "lr", label: `${INDENT}Femoral`, left: "Left Groin/Sub-Node Fields Lif", right: "Right Groin/Sub-Node Fields Rif" },
+          { type: "lr", label: `${INDENT}Inguinal`, left: "Left Groin/Sub-Node Fields Lii", right: "Right Groin/Sub-Node Fields Rii" },
+          { type: "lr", label: `${INDENT}Popliteal`, left: "Left Popliteal", right: "Right Popliteal" },
         ],
       },
     ],
@@ -344,7 +325,7 @@ function SidebarContent({
     <>
       <Paper variant="outlined" sx={{ m: 2, p: 2, borderRadius: 3 }}>
         <Typography variant="h2" sx={{ mb: 0.75 }}>
-          Tool 2 - Heatmaps
+          Heatmaps Tool
         </Typography>
         <Typography variant="body2" color="text.secondary">
           Select a region from the drop down menu to colour the mesh according to the drainage likelihood of that region. Display options are available at the bottom of the control panel.
@@ -424,40 +405,32 @@ function SidebarContent({
                       <TableCell />
                     </TableRow>
 
-                    {/* Collapsible content */}
-                    <TableRow>
-                      <TableCell colSpan={3} sx={{ p: 0, borderBottom: "none" }}>
-                        <Collapse in={open} timeout="auto" unmountOnExit>
-                          <Table size="small">
-                            <TableBody>
-                              {sec.rows.map((r, idx) => {
-                                if (r.type === "single") {
-                                  return (
-                                    <HeatmapSingleRow
-                                      key={`${sec.title}-single-${idx}`}
-                                      label={r.label}
-                                      valueKey={r.valueKey}
-                                      value={region}
-                                      onChange={setRegion}
-                                    />
-                                  );
-                                }
-                                return (
-                                  <HeatmapRow
-                                    key={`${sec.title}-lr-${idx}`}
-                                    label={r.label}
-                                    left={r.left}
-                                    right={r.right}
-                                    value={region}
-                                    onChange={setRegion}
-                                  />
-                                );
-                              })}
-                            </TableBody>
-                          </Table>
-                        </Collapse>
-                      </TableCell>
-                    </TableRow>
+                    {/* Child rows rendered in the same table */}
+                    {open
+                      ? sec.rows.map((r, idx) => {
+                          if (r.type === "single") {
+                            return (
+                              <HeatmapSingleRow
+                                key={`${sec.title}-single-${idx}`}
+                                label={r.label}
+                                valueKey={r.valueKey}
+                                value={region}
+                                onChange={setRegion}
+                              />
+                            );
+                          }
+                          return (
+                            <HeatmapRow
+                              key={`${sec.title}-lr-${idx}`}
+                              label={r.label}
+                              left={r.left}
+                              right={r.right}
+                              value={region}
+                              onChange={setRegion}
+                            />
+                          );
+                        })
+                      : null}
                   </Fragment>
                 );
               })}
@@ -517,7 +490,7 @@ function SidebarContent({
             <TableRow hover>
               <TableCell>Display melanoma sites</TableCell>
               <TableCell align="center">
-                <Checkbox
+                <Switch
                   checked={displaySites}
                   onChange={(e) => setDisplaySites(e.target.checked)}
                 />

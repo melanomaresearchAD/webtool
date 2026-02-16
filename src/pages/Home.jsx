@@ -57,7 +57,7 @@ export default function Home() {
           <Grid size={{ xs: 12, md: 6 }}  sx={{ display: "flex", justifyContent: "center" }}>
             <ToolCard
               icon={<PercentIcon />}
-              title="Tool 1 - Skin Selection"
+              title="Skin Selection Tool"
               body="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer nec odio. Praesent libero. Sed cursus ante dapibus diam."
               ctaLabel="Open Skin Selection Tool"
               to="/tool1"
@@ -67,7 +67,7 @@ export default function Home() {
           <Grid size={{ xs: 12, md: 6 }} sx={{ display: "flex", justifyContent: "center" }}>
             <ToolCard
               icon={<BubbleChartIcon />}
-              title="Tool 2 - Heatmaps"
+              title="Heatmaps Tool"
               body="Duis sagittis ipsum. Praesent mauris. Fusce nec tellus sed augue semper porta. Mauris massa. Vestibulum lacinia arcu."
               ctaLabel="Open Heatmaps Tool"
               to="/tool2"

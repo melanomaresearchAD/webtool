@@ -1,10 +1,9 @@
-import { useMemo, useRef, useState } from "react";
+import {useRef, useState } from "react";
 import {
   Box,
   Paper,
   Typography,
   Stack,
-  Divider,
   Table,
   TableContainer,
   TableHead,
@@ -224,7 +223,7 @@ function SidebarContent({
       {/* Tool title and description */}
       <Paper variant="outlined" sx={{ m: 2, p: 2, borderRadius: 3 }}>
         <Typography variant="h2" sx={{ mb: 0.75 }}>
-          Tool 1 - Skin selection
+          Skin Selection Tool
         </Typography>
         <Typography variant="body2" color="text.secondary">
           Select a surface element on the model to populate node-field statistics and visual overlays.
@@ -285,10 +284,13 @@ function SidebarContent({
             </TableBody>
           </Table>
         </TableContainer>
-
-        <Divider sx={{ my: 2 }} />
-
-        <Stack spacing={0.5}>
+      </Paper>
+      
+      <Paper variant="outlined" sx={{ m: 2, p: 2, borderRadius: 3 }}>
+        <Typography>
+          Display
+        </Typography>
+        <Stack direction="row" spacing={0.5}>
           <FormControlLabel
             control={
               <Checkbox
@@ -296,7 +298,7 @@ function SidebarContent({
                 onChange={(e) => setShowPatientCounts(e.target.checked)}
               />
             }
-            label="Display #Cases"
+            label="#Cases"
           />
           <FormControlLabel
             control={
@@ -305,7 +307,7 @@ function SidebarContent({
                 onChange={(e) => setShowNodecodes(e.target.checked)}
               />
             }
-            label="Display Codes"
+            label="Codes"
           />
           <FormControlLabel
             control={
@@ -314,7 +316,7 @@ function SidebarContent({
                 onChange={(e) => setShowDrainage(e.target.checked)}
               />
             }
-            label="Display Drainage %"
+            label="Drainage %"
           />
         </Stack>
       </Paper>

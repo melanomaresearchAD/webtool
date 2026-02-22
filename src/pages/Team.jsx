@@ -34,7 +34,7 @@ const teamMembers = [
     title: "Research Assistant",
     organisation: "University of Auckland",
     profileUrl: "https://nz.linkedin.com/in/arnav-dogra",
-    imageUrl: "",
+    imageUrl: `${import.meta.env.BASE_URL}images/arnav.png`,
   },
 ];
 

@@ -39,7 +39,7 @@ export default function App() {
 
       <Box component="main" sx={{ flex: 1, minHeight: 0, width: "100%" }}>
         <Routes>
-          <Route path="/" element={ <CenteredPage> <Home /> </CenteredPage>}/>
+          <Route path="/" element={ <FullBleedPage> <Home /> </FullBleedPage>}/>
           <Route path="/tool1" element={ <FullBleedPage> <Tool1 /> </FullBleedPage> } />
           <Route path="/tool2" element={<FullBleedPage> <Tool2 /> </FullBleedPage>} />
           <Route path="/team"  element={ <CenteredPage> <Team /> </CenteredPage> } />

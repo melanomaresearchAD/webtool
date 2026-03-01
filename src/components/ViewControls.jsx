@@ -10,23 +10,42 @@ function labelForPreset(p) {
   return p;
 }
 
+const pillFabSx = {
+  height: 40,
+  minHeight: 40,
+  width: 150,
+  minWidth: 150,
+  borderRadius: 999,
+  boxShadow: "none",
+  border: "1px solid",
+  borderColor: "divider",
+  bgcolor: "background.paper",
+  color: "text.primary",
+  px: 1.0,
+  typography: "body2",
+  fontWeight: 500,
+  letterSpacing: 0,
+  textTransform: "none",
+  "&:hover": { bgcolor: "background.paper" },
+};
+
 export default function ViewControls({
   value = "All",
   onChange,
   sx,
-  anchor = "bottom-left",
+  anchor = "top-right",
+  offsetX = 140,
 }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
-  const safeBottom = "calc(env(safe-area-inset-bottom, 0px) + 12px)";
-  const safeLeft = "calc(env(safe-area-inset-left, 0px) + 12px)";
+  const safeTop = "calc(env(safe-area-inset-top, 0px) + 12px)";
   const safeRight = "calc(env(safe-area-inset-right, 0px) + 12px)";
 
   const positionSx =
-    anchor === "bottom-left"
-      ? { left: safeLeft, bottom: safeBottom }
-      : { right: safeRight, bottom: safeBottom };
+    anchor === "top-right"
+      ? { top: safeTop, right: `calc(${safeRight} + ${offsetX}px)` }
+      : { top: safeTop, right: safeRight }; // fallback
 
   return (
     <Box
@@ -41,19 +60,11 @@ export default function ViewControls({
       <Fab
         size="small"
         variant="extended"
+        disableRipple
         onClick={(e) => setAnchorEl(e.currentTarget)}
-        sx={{
-          textTransform: "none",
-          borderRadius: 999,
-          boxShadow: "none",
-          border: "1px solid",
-          borderColor: "divider",
-          bgcolor: "background.paper",
-          color: "text.primary",
-          "&:hover": { bgcolor: "background.paper" },
-        }}
+        sx={pillFabSx}
       >
-        <TuneOutlinedIcon sx={{ mr: 1 }} />
+        <TuneOutlinedIcon sx={{ mr: 0.75, fontSize: 20 }} />
         View: {labelForPreset(value)}
       </Fab>
 
@@ -61,19 +72,12 @@ export default function ViewControls({
         anchorEl={anchorEl}
         open={open}
         onClose={() => setAnchorEl(null)}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-        transformOrigin={{ vertical: "bottom", horizontal: "right" }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
         slotProps={{
-          paper: {
-            sx: {
-              borderRadius: 2,
-              mt: 1,
-              minWidth: 180,
-            },
-          },
+          paper: { sx: { borderRadius: 2, mt: 1, minWidth: 180 } },
         }}
       >
-
         {PRESETS.map((p) => (
           <MenuItem
             key={p}

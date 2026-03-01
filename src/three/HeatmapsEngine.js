@@ -26,6 +26,9 @@ export class HeatmapsEngine {
     this._setControlsTarget = this._setControlsTarget.bind(this);
     this._disposed = false;
 
+    this.skinRoot = null;
+    this.skinLines = null;
+
   }
 
   async init() {
@@ -68,6 +71,9 @@ export class HeatmapsEngine {
     await this._loadDiscretePoints();
     if (this._disposed) return;
     await this._loadHeatmapMesh();
+    if (this._disposed) return;
+
+    await this._loadSkinOverlay();
     if (this._disposed) return;
 
     // start with a  default region
@@ -173,6 +179,9 @@ export class HeatmapsEngine {
     this.renderer?.dispose();
     this.renderer = null;
     this.scene = null;
+    this.skinRoot = null;
+    this.skinLines = null;
+
   }
 
   // Internal
@@ -255,6 +264,85 @@ export class HeatmapsEngine {
     this._applyHeatmap();
   }
 
+  async _loadSkinOverlay() {
+    const loader = new GLTFLoader();
+
+    const gltf = await new Promise((resolve, reject) => {
+      loader.load(
+        `${import.meta.env.BASE_URL}data/scene.glb`,
+        resolve,
+        undefined,
+        reject
+      );
+    });
+
+    // Match Tool 1 structure
+    const root = gltf.scene?.children?.[0] ?? gltf.scene;
+    if (!root) throw new Error("scene.glb loaded but no root found");
+
+    // Transparent skin overlay so heatmap stays visible
+    const skinMat = new THREE.MeshPhongMaterial({
+      color: "#E5B27F",
+      specular: "#33334C",
+      opacity: 0.01,
+      transparent: true,
+      depthWrite: false,
+      shininess: 20,
+      side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1,
+    });
+
+    const lineMat = new THREE.LineBasicMaterial({
+      color: 0x000000,
+      transparent: true,
+      opacity: 0.7,
+      depthTest: true,   //  hides lines behind the surface (tidy)
+      depthWrite: false
+    });
+
+    // Find the Lines node and rebuild it as LineSegments, but keep transforms
+    let linesNode = null;
+
+    for (const child of root.children ?? []) {
+      child.geometry?.computeVertexNormals?.();
+
+      if (child.name === "Lines") {
+        linesNode = child;
+        continue;
+      }
+
+      if (child.isMesh) {
+        child.material = skinMat;
+        child.renderOrder = 5;
+      }
+    }
+
+    if (linesNode?.geometry) {
+      const lines = new THREE.LineSegments(linesNode.geometry, lineMat);
+
+      lines.position.copy(linesNode.position);
+      lines.rotation.copy(linesNode.rotation);
+      lines.scale.copy(linesNode.scale);
+
+      lines.renderOrder = 50;
+      lines.frustumCulled = false;
+
+      linesNode.visible = false;
+      root.add(lines);
+
+      this.skinLines = lines;
+    }
+
+    // Apply the same offset as heatmapRoot 
+    root.position.add(this.offset);
+
+    this.scene.add(root);
+    this.skinRoot = root;
+  }
+
+
   _applyHeatmap() {
     if (!this.mesh?.geometry) return;
 
@@ -269,90 +357,88 @@ export class HeatmapsEngine {
     }
   }
 
-_applyDiscretePoints() {
-  if (!this.discretePoints || !this.discreteGroup) return;
+  _applyDiscretePoints() {
+    if (!this.discretePoints || !this.discreteGroup) return;
 
-  // remove old overlay
-  this._clearDiscreteOverlay();
-  if (!this.selection.displaySites) return;
+    // remove old overlay
+    this._clearDiscreteOverlay();
+    if (!this.selection.displaySites) return;
 
-  // select correct dataset key
-  let key = this.selection.region;
-  if (this.selection.patientDataMode === "freq") key = `${key} Frequency`;
+    // select correct dataset key
+    let key = this.selection.region;
+    if (this.selection.patientDataMode === "freq") key = `${key} Frequency`;
 
-  const data = this.discretePoints[key];
-  if (!data?.positions?.length) return;
+    const data = this.discretePoints[key];
+    if (!data?.positions?.length) return;
 
-  const count = data.positions.length;
+    const count = data.positions.length;
 
-  // Geometry
-  const geom = new THREE.SphereGeometry(10, 16, 16);
+    // Geometry
+    const geom = new THREE.SphereGeometry(10, 16, 16);
 
-  // give the sphere a vertex color attribute (white)
-  // so vertexColors never renders as black if instanceColor is not picked up
-  const vCount = geom.getAttribute("position").count;
-  const baseColors = new Float32Array(vCount * 3);
-  baseColors.fill(1); // white
-  geom.setAttribute("color", new THREE.BufferAttribute(baseColors, 3));
+    // give the sphere a vertex color attribute (white)
+    // so vertexColors never renders as black if instanceColor is not picked up
+    const vCount = geom.getAttribute("position").count;
+    const baseColors = new Float32Array(vCount * 3);
+    baseColors.fill(1); // white
+    geom.setAttribute("color", new THREE.BufferAttribute(baseColors, 3));
 
-  // material
-  const mat = new THREE.MeshPhongMaterial({
-    color: 0xffffff,
-    specular: "#33334C",
-    shininess: 20,
-    vertexColors: true,
-  });
+    // material
+    const mat = new THREE.MeshPhongMaterial({
+      color: 0xffffff,
+      specular: "#33334C",
+      shininess: 20,
+      vertexColors: true,
+    });
 
-  const instanced = new THREE.InstancedMesh(geom, mat, count);
+    const instanced = new THREE.InstancedMesh(geom, mat, count);
 
-  // allocate and attach instanceColor
-  instanced.instanceColor = new THREE.InstancedBufferAttribute(
-    new Float32Array(count * 3),
-    3
-  );
-  instanced.geometry.setAttribute("instanceColor", instanced.instanceColor);
+    // allocate and attach instanceColor
+    instanced.instanceColor = new THREE.InstancedBufferAttribute(
+      new Float32Array(count * 3),
+      3
+    );
+    instanced.geometry.setAttribute("instanceColor", instanced.instanceColor);
 
-  // transforms
-  const m = new THREE.Matrix4();
-  const p = new THREE.Vector3();
-  const q = new THREE.Quaternion();
-  const s = new THREE.Vector3(0.5, 0.5, 0.5);
+    // transforms
+    const m = new THREE.Matrix4();
+    const p = new THREE.Vector3();
+    const q = new THREE.Quaternion();
+    const s = new THREE.Vector3(0.5, 0.5, 0.5);
 
-  const arr = instanced.instanceColor.array;
+    const arr = instanced.instanceColor.array;
 
-  for (let i = 0; i < count; i++) {
-    const pos = data.positions[i];
-    p.set(pos[0], pos[1], pos[2]); // no offset 
+    for (let i = 0; i < count; i++) {
+      const pos = data.positions[i];
+      p.set(pos[0], pos[1], pos[2]); // no offset 
 
-    m.compose(p, q, s);
-    instanced.setMatrixAt(i, m);
+      m.compose(p, q, s);
+      instanced.setMatrixAt(i, m);
 
-    // colour
-    let c;
-    if (this.selection.patientDataMode === "freq") {
-      c = new THREE.Color(0, 0, 0);
-    } else {
-      const cv = data.colors?.[i];
-      // colours stored as packed 0xRRGGBB numbers from the original version
-      console.log("sample colour value:", data.colors?.[0], typeof data.colors?.[0]);
-      c = (typeof cv === "number" && Number.isFinite(cv)) ? new THREE.Color(cv) : new THREE.Color(0, 0, 0);
+      // colour
+      let c;
+      if (this.selection.patientDataMode === "freq") {
+        c = new THREE.Color(0, 0, 0);
+      } else {
+        const cv = data.colors?.[i];
+        c = (typeof cv === "number" && Number.isFinite(cv)) ? new THREE.Color(cv) : new THREE.Color(0, 0, 0);
+      }
+
+      const j = i * 3;
+      arr[j] = c.r;
+      arr[j + 1] = c.g;
+      arr[j + 2] = c.b;
     }
 
-    const j = i * 3;
-    arr[j] = c.r;
-    arr[j + 1] = c.g;
-    arr[j + 2] = c.b;
+    instanced.instanceMatrix.needsUpdate = true;
+    instanced.instanceColor.needsUpdate = true;
+    instanced.frustumCulled = false;
+
+    // if the program compiled before instanceColor existed force recompile 
+    instanced.material.needsUpdate = true;
+    this._discreteInstanced = instanced;
+    this.discreteGroup.add(instanced);
   }
-
-  instanced.instanceMatrix.needsUpdate = true;
-  instanced.instanceColor.needsUpdate = true;
-  instanced.frustumCulled = false;
-
-  // if the program compiled before instanceColor existed force recompile 
-  instanced.material.needsUpdate = true;
-  this._discreteInstanced = instanced;
-  this.discreteGroup.add(instanced);
-}
 
   _clearDiscreteOverlay(dispose = false) {
     if (this._discreteInstanced) {
@@ -368,7 +454,7 @@ _applyDiscretePoints() {
   }
 
   _dollyToFocus(scale) {
-    const focus =this._getFocusPoint();
+    const focus = this._getFocusPoint();
 
     const v = new THREE.Vector3().subVectors(this.camera.position, focus);
     v.multiplyScalar(scale);
@@ -379,7 +465,7 @@ _applyDiscretePoints() {
   }
 
 
-   _getFocusPoint() {
+  _getFocusPoint() {
     // use the element clicked by user 
     if (this.SELECTED && this.hasFocusPoint) return this.focusPoint;
 
@@ -424,35 +510,4 @@ _applyDiscretePoints() {
     const r = this.host.getBoundingClientRect();
     return { width: Math.max(1, r.width), height: Math.max(1, r.height) };
   }
-  
-
-
-_lerp(a, b, t) {
-  return a + (b - a) * t;
-}
-
-_colorFromLegendScalar(v) {
-  const t = Math.max(0, Math.min(255, v)) / 255;
-
-  const stops = [
-    { t: 0.00, c: new THREE.Color("#0033ff") },
-    { t: 0.25, c: new THREE.Color("#00d5ff") },
-    { t: 0.50, c: new THREE.Color("#00ff66") },
-    { t: 0.75, c: new THREE.Color("#ffe600") },
-    { t: 1.00, c: new THREE.Color("#ff2a00") },
-  ];
-
-  let i = 0;
-  while (i < stops.length - 2 && t > stops[i + 1].t) i++;
-
-  const a = stops[i];
-  const b = stops[i + 1];
-  const localT = (t - a.t) / (b.t - a.t);
-
-  return new THREE.Color(
-    this._lerp(a.c.r, b.c.r, localT),
-    this._lerp(a.c.g, b.c.g, localT),
-    this._lerp(a.c.b, b.c.b, localT)
-  );
-}
 }

@@ -11,10 +11,6 @@ function labelForPreset(p) {
 }
 
 const pillFabSx = {
-  height: 40,
-  minHeight: 40,
-  width: 150,
-  minWidth: 150,
   borderRadius: 999,
   boxShadow: "none",
   border: "1px solid",
@@ -33,8 +29,7 @@ export default function ViewControls({
   value = "All",
   onChange,
   sx,
-  anchor = "top-right",
-  offsetX = 140,
+  offsetY = 52,
 }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -42,18 +37,14 @@ export default function ViewControls({
   const safeTop = "calc(env(safe-area-inset-top, 0px) + 12px)";
   const safeRight = "calc(env(safe-area-inset-right, 0px) + 12px)";
 
-  const positionSx =
-    anchor === "top-right"
-      ? { top: safeTop, right: `calc(${safeRight} + ${offsetX}px)` }
-      : { top: safeTop, right: safeRight }; // fallback
-
   return (
     <Box
       sx={{
         position: "absolute",
+        top: `calc(${safeTop} + ${offsetY}px)`,
+        right: safeRight,
         zIndex: 30,
         pointerEvents: "auto",
-        ...positionSx,
         ...sx,
       }}
     >

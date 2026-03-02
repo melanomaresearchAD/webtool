@@ -5,10 +5,6 @@ import ReplayOutlinedIcon from "@mui/icons-material/ReplayOutlined";
 
 // Same specifications as ViewControls for consistency.
 const pillFabSx = {
-  height: 40,
-  minHeight: 40,
-  width: 120,
-  minWidth: 120,
   borderRadius: 999,
   boxShadow: "none",
   border: "1px solid",

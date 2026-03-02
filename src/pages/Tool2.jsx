@@ -14,7 +14,7 @@ import {
   TableBody,
   TableRow,
   TableCell,
-  IconButton, 
+  IconButton,
   Switch,
 } from "@mui/material";
 
@@ -28,8 +28,13 @@ import ViewControls from "../components/ViewControls";
 import CanvasControls from "../components/CanvasControls";
 import HeatmapsViewer from "../components/HeatmapsViewer";
 
-const SIDEBAR_W = "clamp(360px, 28vw, 680px)";
 const safeTop = "calc(env(safe-area-inset-top, 0px) + 12px)";
+const safeBottom = "calc(env(safe-area-inset-bottom, 0px) + 12px)";
+
+// Sidebar resize bounds (desktop)
+const MIN_SIDEBAR_W = 420;
+const MAX_SIDEBAR_W = 720;
+const DEFAULT_SIDEBAR_W = 520;
 
 export default function Tool2() {
   const theme = useTheme();
@@ -40,6 +45,18 @@ export default function Tool2() {
 
   // Mobile drawer
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Desktop sidebar width (draggable)
+  const [sidebarW, setSidebarW] = useState(() => {
+    if (typeof window === "undefined") return DEFAULT_SIDEBAR_W;
+    const saved = Number(window.localStorage.getItem("tool2_sidebarW"));
+    return Number.isFinite(saved) && saved > 0 ? saved : DEFAULT_SIDEBAR_W;
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("tool2_sidebarW", String(sidebarW));
+  }, [sidebarW]);
 
   // View preset
   const [viewPreset, setViewPreset] = useState("All");
@@ -57,7 +74,7 @@ export default function Tool2() {
   const controlsText =
     "Controls: left mouse button to rotate, right mouse button to pan. Mouse wheel to zoom. Double click to focus. Control panel located on top left.";
 
- // view options
+  // view options
   const hasNorm = patientDataKeys.includes(region);
   const hasFreq = patientDataKeys.includes(`${region} Frequency`);
 
@@ -65,13 +82,13 @@ export default function Tool2() {
   useEffect(() => {
     if (patientDataMode === "freq" && !hasFreq && hasNorm) setPatientDataMode("norm");
     if (patientDataMode === "norm" && !hasNorm && hasFreq) setPatientDataMode("freq");
-  }, [region, hasNorm, hasFreq, patientDataMode]);
+  }, [hasFreq, hasNorm, patientDataMode]);
 
   // If the currently selected region is not in the loaded regions list, fall back
   useEffect(() => {
     if (regions.length === 0) return;
     if (!regions.includes(region)) setRegion(defaultRegion || regions[0]);
-  }, [regions, defaultRegion]); // eslint-disabledline react-hooks/exhaustive-deps
+  }, [regions, defaultRegion, region]);
 
   const handleReset = () => {
     setViewPreset("All");
@@ -87,6 +104,38 @@ export default function Tool2() {
     displaySites,
   };
 
+  // Desktop resize handler
+  const startResize = (e) => {
+    if (!isMdUp) return;
+    if (e.button !== 0) return;
+
+    e.preventDefault();
+
+    const startX = e.clientX;
+    const startW = sidebarW;
+
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    const onMove = (ev) => {
+      const next = Math.min(
+        MAX_SIDEBAR_W,
+        Math.max(MIN_SIDEBAR_W, startW + (ev.clientX - startX))
+      );
+      setSidebarW(next);
+    };
+
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
   return (
     <Box
       sx={{
@@ -94,7 +143,7 @@ export default function Tool2() {
         height: { xs: "calc(100dvh - 56px)", sm: "calc(100dvh - 64px)" },
         width: "100%",
         display: { xs: "block", md: "grid" },
-        gridTemplateColumns: { md: `${SIDEBAR_W} 1fr` },
+        gridTemplateColumns: { md: `${sidebarW}px 1fr` },
         overflow: "hidden",
       }}
     >
@@ -102,6 +151,7 @@ export default function Tool2() {
       {isMdUp && (
         <Box
           sx={{
+            position: "relative",
             display: "flex",
             flexDirection: "column",
             height: "100%",
@@ -112,9 +162,26 @@ export default function Tool2() {
             minHeight: 0,
           }}
         >
+          {/* Drag resize handle */}
+          <Box
+            onPointerDown={startResize}
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize side panel"
+            sx={{
+              position: "absolute",
+              top: 0,
+              right: -4,
+              width: 8,
+              height: "100%",
+              cursor: "col-resize",
+              zIndex: 50,
+              "&:hover": { bgcolor: "action.hover" },
+            }}
+          />
+
           <SidebarContent
             controlsText={controlsText}
-            regions={regions}
             region={region}
             setRegion={setRegion}
             displaySites={displaySites}
@@ -147,7 +214,6 @@ export default function Tool2() {
             setRegions(meta.regions);
             setPatientDataKeys(meta.patientDataKeys);
             setDefaultRegion(meta.defaultRegion);
-            // default region
             setRegion((prev) => (meta.regions.includes(prev) ? prev : meta.defaultRegion));
           }}
         />
@@ -158,6 +224,7 @@ export default function Tool2() {
           onReset={handleReset}
         />
         <ViewControls value={viewPreset} onChange={setViewPreset} />
+         <HeatmapLegend compact={!isMdUp} />
 
         {/* Mobile drawer button */}
         {!isMdUp && (
@@ -218,7 +285,6 @@ export default function Tool2() {
                 <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
                   <SidebarContent
                     controlsText={controlsText}
-                    regions={regions}
                     region={region}
                     setRegion={setRegion}
                     displaySites={displaySites}
@@ -249,77 +315,64 @@ function SidebarContent({
   hasNorm,
   hasFreq,
 }) {
-  const SECTION_ROW_SX = {
-    fontWeight: 800,
-  };
-
-  const INDENT= "\u2003-\u2003";
+  const SECTION_ROW_SX = { fontWeight: 800 };
 
   // Default options closed
   const [openSections, setOpenSections] = useState({
     "Head and Neck": false,
-    Axilla: false,
-    Groin: false,
+    "Torso and Upper Limb": false,
+    "Lower Limb": false,
   });
 
-  const toggle = (key) =>
-    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  const toggle = (key) => setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const sections = useMemo(
     () => [
       {
         title: "Head and Neck",
         rows: [
-          { type: "lr", label: `${INDENT}Occipital`, left: "Left Occipital", right: "Right Occipital" },
-          { type: "lr", label: `${INDENT}Preauricular`, left: "Left Preauricular", right: "Right Preauricular" },
-          { type: "lr", label: `${INDENT}Postauricular`, left: "Left Postauricular", right: "Right Postauricular" },
-          { type: "lr", label: `${INDENT}Cervical Level I`, left: "Left Cervical Level I", right: "Right Cervical Level I" },
-          { type: "lr", label: `${INDENT}Cervical Level II`, left: "Left Cervical Level II", right: "Right Cervical Level II" },
-          { type: "lr", label: `${INDENT}Cervical Level III`, left: "Left Cervical Level III", right: "Right Cervical Level III" },
-          { type: "lr", label: `${INDENT}Cervical Level IV`, left: "Left Cervical Level IV", right: "Right Cervical Level IV" },
-          { type: "lr", label: `${INDENT}Cervical Level V`, left: "Left Cervical Level V", right: "Right Cervical Level V" },
-          { type: "lr", label: `${INDENT}Submental`, left: "Left Submental", right: "Right Submental" },
-          { type: "single", label: `${INDENT}Anterior Node Fields`, valueKey: "Anterior Head" },
-          { type: "single", label: `${INDENT}Posterior Node Fields`, valueKey: "Posterior Head" },
+          { type: "lr", label: "Occipital", left: "Left Occipital", right: "Right Occipital" },
+          { type: "lr", label: "Preauricular", left: "Left Preauricular", right: "Right Preauricular" },
+          { type: "lr", label: "Postauricular", left: "Left Postauricular", right: "Right Postauricular" },
+          { type: "lr", label: "Cervical Level I", left: "Left Cervical Level I", right: "Right Cervical Level I" },
+          { type: "lr", label: "Cervical Level II", left: "Left Cervical Level II", right: "Right Cervical Level II" },
+          { type: "lr", label: "Cervical Level III", left: "Left Cervical Level III", right: "Right Cervical Level III" },
+          { type: "lr", label: "Cervical Level IV", left: "Left Cervical Level IV", right: "Right Cervical Level IV" },
+          { type: "lr", label: "Cervical Level V", left: "Left Cervical Level V", right: "Right Cervical Level V" },
+          { type: "lr", label: "Submental", left: "Left Submental", right: "Right Submental" },
+          { type: "single", label: "Anterior Node Fields", valueKey: "Anterior Head" },
+          { type: "single", label: "Posterior Node Fields", valueKey: "Posterior Head" },
         ],
       },
-
       {
         title: "Torso and Upper Limb",
         rows: [
-          { type: "lr", label: `${INDENT}Axilla Combined Levels I, II, III`, left: "Left Axilla", right: "Right Axilla" },
-          { type: "lr", label: `${INDENT}Axilla Level I Anterior`, left: "Left Axilla/Sub-Node Fields Laa", right: "Right Axilla/Sub-Node Fields Raa" },
-          { type: "lr", label: `${INDENT}Axilla Level I Mid`, left: "Left Axilla/Sub-Node Fields Lam", right: "Right Axilla/Sub-Node Fields Ram" },
-          { type: "lr", label: `${INDENT}Axilla Level I Posterior`, left: "Left Axilla/Sub-Node Fields Lap", right: "Right Axilla/Sub-Node Fields Rap" },
-          { type: "lr", label: `${INDENT}Axilla Level I Lateral`, left: "Left Axilla/Sub-Node Fields Lal", right: "Right Axilla/Sub-Node Fields Ral" },
-          { type: "lr", label: `${INDENT}Triangular Intermuscular Space`, left: "Left Triangular Intermuscular Space", right: "Right Triangular Intermuscular Space" },
-          { type: "lr", label: `${INDENT}Supraclavicular Fossa`, left: "Left Supraclavicular Fossa", right: "Right Supraclavicular Fossa" },
-          { type: "lr", label: `${INDENT}Epitrochlear`, left: "Left Epitrochlear", right: "Right Epitrochlear" },
+          { type: "lr", label: "Axilla Combined Levels I, II, III", left: "Left Axilla", right: "Right Axilla" },
+          { type: "lr", label: "Axilla Level I Anterior", left: "Left Axilla/Sub-Node Fields Laa", right: "Right Axilla/Sub-Node Fields Raa" },
+          { type: "lr", label: "Axilla Level I Mid", left: "Left Axilla/Sub-Node Fields Lam", right: "Right Axilla/Sub-Node Fields Ram" },
+          { type: "lr", label: "Axilla Level I Posterior", left: "Left Axilla/Sub-Node Fields Lap", right: "Right Axilla/Sub-Node Fields Rap" },
+          { type: "lr", label: "Axilla Level I Lateral", left: "Left Axilla/Sub-Node Fields Lal", right: "Right Axilla/Sub-Node Fields Ral" },
+          { type: "lr", label: "Triangular Intermuscular Space", left: "Left Triangular Intermuscular Space", right: "Right Triangular Intermuscular Space" },
+          { type: "lr", label: "Supraclavicular Fossa", left: "Left Supraclavicular Fossa", right: "Right Supraclavicular Fossa" },
+          { type: "lr", label: "Epitrochlear", left: "Left Epitrochlear", right: "Right Epitrochlear" },
         ],
       },
-
       {
         title: "Lower Limb",
         rows: [
-          { type: "lr", label: `${INDENT}Combined`, left: "Left Groin", right: "Right Groin" },
-          { type: "lr", label: `${INDENT}External Iliac`, left: "Left Groin/Sub-Node Fields Liei", right: "Right Groin/Sub-Node Fields Riei" },
-          { type: "lr", label: `${INDENT}Femoral`, left: "Left Groin/Sub-Node Fields Lif", right: "Right Groin/Sub-Node Fields Rif" },
-          { type: "lr", label: `${INDENT}Inguinal`, left: "Left Groin/Sub-Node Fields Lii", right: "Right Groin/Sub-Node Fields Rii" },
-          { type: "lr", label: `${INDENT}Popliteal`, left: "Left Popliteal", right: "Right Popliteal" },
+          { type: "lr", label: "Combined", left: "Left Groin", right: "Right Groin" },
+          { type: "lr", label: "External Iliac", left: "Left Groin/Sub-Node Fields Liei", right: "Right Groin/Sub-Node Fields Riei" },
+          { type: "lr", label: "Femoral", left: "Left Groin/Sub-Node Fields Lif", right: "Right Groin/Sub-Node Fields Rif" },
+          { type: "lr", label: "Inguinal", left: "Left Groin/Sub-Node Fields Lii", right: "Right Groin/Sub-Node Fields Rii" },
+          { type: "lr", label: "Popliteal", left: "Left Popliteal", right: "Right Popliteal" },
         ],
       },
     ],
     []
   );
 
-
-  const sectionHasSelected = (sec) => {
-    return sec.rows.some((r) => {
-      if (r.type === "single") return r.valueKey === region;
-      return r.left === region || r.right === region;
-    });
-  };
-
+  const sectionHasSelected = (sec) =>
+    sec.rows.some((r) => (r.type === "single" ? r.valueKey === region : r.left === region || r.right === region));
 
   return (
     <>
@@ -406,31 +459,30 @@ function SidebarContent({
                     </TableRow>
 
                     {/* Child rows rendered in the same table */}
-                    {open
-                      ? sec.rows.map((r, idx) => {
-                          if (r.type === "single") {
-                            return (
-                              <HeatmapSingleRow
-                                key={`${sec.title}-single-${idx}`}
-                                label={r.label}
-                                valueKey={r.valueKey}
-                                value={region}
-                                onChange={setRegion}
-                              />
-                            );
-                          }
+                    {open &&
+                      sec.rows.map((r, idx) => {
+                        if (r.type === "single") {
                           return (
-                            <HeatmapRow
-                              key={`${sec.title}-lr-${idx}`}
+                            <HeatmapSingleRow
+                              key={`${sec.title}-single-${idx}`}
                               label={r.label}
-                              left={r.left}
-                              right={r.right}
+                              valueKey={r.valueKey}
                               value={region}
                               onChange={setRegion}
                             />
                           );
-                        })
-                      : null}
+                        }
+                        return (
+                          <HeatmapRow
+                            key={`${sec.title}-lr-${idx}`}
+                            label={r.label}
+                            left={r.left}
+                            right={r.right}
+                            value={region}
+                            onChange={setRegion}
+                          />
+                        );
+                      })}
                   </Fragment>
                 );
               })}
@@ -481,10 +533,11 @@ function SidebarContent({
             </TableRow>
           </TableBody>
         </Table>
+      </Paper>
 
-        <Divider sx={{ my: 2 }} />
 
-        {/* Display sites and patient data mode*/}
+      {/* Display sites and patient data mode*/}
+      <Paper variant="outlined" sx={{ m: 2, p: 2, borderRadius: 3 }}>
         <Table size="small">
           <TableBody>
             <TableRow hover>
@@ -499,84 +552,117 @@ function SidebarContent({
 
             <TableRow hover>
               <TableCell>Frequency</TableCell>
-              <TableCell align="center" sx={{ cursor: hasFreq ? "pointer" : "default" }} onClick={() => hasFreq && setPatientDataMode("freq")}>
+              <TableCell
+                align="center"
+                sx={{ cursor: hasFreq ? "pointer" : "default" }}
+                onClick={() => hasFreq && setPatientDataMode("freq")}
+              >
                 <Radio checked={patientDataMode === "freq"} disabled={!hasFreq} />
               </TableCell>
             </TableRow>
 
             <TableRow hover>
               <TableCell>Normalised (% Drainage likelihood)</TableCell>
-              <TableCell align="center" sx={{ cursor: hasNorm ? "pointer" : "default" }} onClick={() => hasNorm && setPatientDataMode("norm")}>
+              <TableCell
+                align="center"
+                sx={{ cursor: hasNorm ? "pointer" : "default" }}
+                onClick={() => hasNorm && setPatientDataMode("norm")}
+              >
                 <Radio checked={patientDataMode === "norm"} disabled={!hasNorm} />
               </TableCell>
             </TableRow>
           </TableBody>
         </Table>
-
-        <Divider sx={{ my: 2 }} />
-
-        {/* Legend */}
-        <Box sx={{ mt: 1 }}>
-          {/*  % Drainage likelihood 0-100 */}
-          <Box sx={{ display: "flex", alignItems: "center", mb: 0.75 }}>
-            <Typography variant="body2" color="text.secondary">
-              0
-            </Typography>
-
-            <Typography
-              variant="body2"
-              sx={{ flex: 1, textAlign: "center", fontWeight: 700 }}
-            >
-              % Drainage likelihood
-            </Typography>
-
-            <Typography variant="body2" color="text.secondary">
-              100
-            </Typography>
-          </Box>
-
-          {/* Colour bar */}
-          <Box
-            sx={{
-              height: 34,
-              borderRadius: 1.25,
-              border: "1px solid",
-              borderColor: "divider",
-              background:
-                "linear-gradient(90deg, #0033ff 0%, #00d5ff 25%, #00ff66 50%, #ffe600 75%, #ff2a00 100%)",
-            }}
-          />
-        </Box>
-
       </Paper>
     </>
   );
 }
 
 function HeatmapRow({ label, left, right, value, onChange }) {
+  const isLeft = value === left;
+  const isRight = value === right;
+
   return (
     <TableRow hover sx={{ cursor: "pointer" }}>
-      <TableCell onClick={() => onChange(value === left ? right : left)}>{label}</TableCell>
-      <TableCell align="center" onClick={() => onChange(left)}>
-        <Radio checked={value === left} onChange={() => onChange(left)} />
+      <TableCell
+        sx={{ pl: 6 }}
+        onClick={() => onChange(value === left ? right : left)}
+      >
+        {label}
       </TableCell>
-      <TableCell align="center" onClick={() => onChange(right)}>
-        <Radio checked={value === right} onChange={() => onChange(right)} />
+
+      <TableCell align="center" sx={{ px: 1 }} onClick={() => onChange(left)}>
+        <Radio checked={isLeft} />
+      </TableCell>
+
+      <TableCell align="center" sx={{ px: 1 }} onClick={() => onChange(right)}>
+        <Radio checked={isRight} />
       </TableCell>
     </TableRow>
   );
 }
 
 function HeatmapSingleRow({ label, valueKey, value, onChange }) {
+  const checked = value === valueKey;
+
   return (
-    <TableRow hover sx={{ cursor: "pointer" }}>
-      <TableCell onClick={() => onChange(valueKey)}>{label}</TableCell>
-      <TableCell align="center" onClick={() => onChange(valueKey)}>
-        <Radio checked={value === valueKey} onChange={() => onChange(valueKey)} />
-      </TableCell>
-      <TableCell align="center" onClick={() => onChange(valueKey)}>
-        <Radio checked={value === valueKey} onChange={() => onChange(valueKey)} />
-      </TableCell>
+    <TableRow hover sx={{ cursor: "pointer" }} onClick={() => onChange(valueKey)}>
+      <TableCell sx={{ pl: 6 }}>{label}</TableCell>
+      <TableCell align="center" sx={{ px: 1 }}><Radio checked={checked} /></TableCell>
+      <TableCell align="center" sx={{ px: 1 }}><Radio checked={checked} /></TableCell>
     </TableRow>
+  );
+}
+
+function HeatmapLegend({ compact = false }) {
+  return (
+    <Paper
+      variant="outlined"
+      sx={{
+        position: "absolute",
+        left: 12,
+        bottom: 12,
+        zIndex: 25,
+        p: compact ? 1 : 1.25,
+        borderRadius: 2.5,
+        bgcolor: "background.paper",
+        pointerEvents: "none", // important: don't block 3D controls
+        width: compact ? 180 : 260,
+      }}
+    >
+      <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+        <Typography variant="caption" color="text.secondary">
+          0%
+        </Typography>
+        <Typography
+          variant="caption"
+          sx={{ flex: 1, textAlign: "center", fontWeight: 700 }}
+        >
+          % Drainage likelihood
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          100%
+        </Typography>
+      </Box>
+
+      <Box
+        sx={{
+          height: compact ? 12 : 14,
+          borderRadius: 999,
+          border: "1px solid",
+          borderColor: "divider",
+          overflow: "hidden",
+        }}
+      >
+        <Box
+          sx={{
+            height: "100%",
+            width: "100%",
+            background:
+              "linear-gradient(90deg, #0033ff 0%, #00d5ff 25%, #00ff66 50%, #ffe600 75%, #ff2a00 100%)",
+          }}
+        />
+      </Box>
+    </Paper>
   );
 }

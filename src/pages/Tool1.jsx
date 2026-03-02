@@ -1,4 +1,4 @@
-import {useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import {
   Box,
   Paper,
@@ -24,7 +24,9 @@ import ViewControls from "../components/ViewControls";
 import CanvasControls from "../components/CanvasControls";
 import SkinSelectionViewer from "../components/SkinSelectionViewer";
 
-const SIDEBAR_W = "clamp(360px, 28vw, 680px)";
+const MIN_SIDEBAR_W = 420;
+const MAX_SIDEBAR_W = 720;
+const DEFAULT_SIDEBAR_W = 520;
 const safeTop = "calc(env(safe-area-inset-top, 0px) + 12px)";
 
 
@@ -58,6 +60,46 @@ export default function Tool1() {
 
   const theme = useTheme();
   const isMdUp = useMediaQuery(theme.breakpoints.up("md"));
+  const [sidebarW, setSidebarW] = useState(() => {
+    const saved = Number(window.localStorage.getItem("tool1_sidebarW"));
+    return Number.isFinite(saved) && saved > 0 ? saved : DEFAULT_SIDEBAR_W;
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem("tool1_sidebarW", String(sidebarW));
+  }, [sidebarW]);
+
+  const startResize = (e) => {
+    if (!isMdUp) return;
+    if (e.button !== 0) return;
+
+    e.preventDefault();
+
+    const startX = e.clientX;
+    const startW = sidebarW;
+
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    const onMove = (ev) => {
+      const next = Math.min(
+        MAX_SIDEBAR_W,
+        Math.max(MIN_SIDEBAR_W, startW + (ev.clientX - startX))
+      );
+      setSidebarW(next);
+    };
+
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
 
   return (
     <Box
@@ -66,7 +108,7 @@ export default function Tool1() {
         height: { xs: "calc(100dvh - 56px)", sm: "calc(100dvh - 64px)" },
         width: "100%",
         display: { xs: "block", md: "grid" },
-        gridTemplateColumns: { md: `${SIDEBAR_W} 1fr` },
+        gridTemplateColumns: { md: `${sidebarW}px 1fr` },
         overflow: "hidden",
       }}
     >
@@ -74,6 +116,7 @@ export default function Tool1() {
       {isMdUp && (
         <Box
           sx={{
+            position: "relative",
             display: "flex",
             flexDirection: "column",
             height: "100%",
@@ -84,6 +127,23 @@ export default function Tool1() {
             minHeight: 0,
           }}
         >
+          {/* Drag resize handle */}
+          <Box
+            onPointerDown={startResize}
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize side panel"
+            sx={{
+              position: "absolute",
+              top: 0,
+              right: -4,
+              width: 8,
+              height: "100%",
+              cursor: "col-resize",
+              zIndex: 50,
+              "&:hover": { bgcolor: "action.hover" },
+            }}
+          />
           <SidebarContent
             rows={rows}
             showPatientCounts={showPatientCounts}
@@ -285,7 +345,7 @@ function SidebarContent({
           </Table>
         </TableContainer>
       </Paper>
-      
+
       <Paper variant="outlined" sx={{ m: 2, p: 2, borderRadius: 3 }}>
         <Typography>
           Display
